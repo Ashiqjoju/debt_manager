@@ -59,7 +59,7 @@ class _TabTwoContentState extends State<TabTwoContent> {
         'Amount': amount,
         'Date': date,
         'Time': currentTimeString,
-        'Action': 'Lent',
+        'Action': 'Borrow',
         'Description': description,
         'isPaid': false,
       });
@@ -69,7 +69,7 @@ class _TabTwoContentState extends State<TabTwoContent> {
         'Amount': amount,
         'Date': date,
         'Time': currentTimeString,
-        'Action': 'Lent',
+        'Action': 'Borrow',
         'Description': description,
         'isPaid': false,
       });
@@ -112,10 +112,10 @@ class _TabTwoContentState extends State<TabTwoContent> {
         ),
 
         actions: [
-          _buildDialogAction('Not Paid', Colors.red, () {
+          _buildDialogAction('Not Paid', Colors.blue, () {
             Navigator.of(context).pop();
           }),
-          _buildDialogAction('Mark as Paid', Colors.green, () {
+          _buildDialogAction('Mark as Paid', Colors.red, () {
             _markAsPaidAndDelete(index, entries);
             Navigator.of(context).pop();
           }),
@@ -365,11 +365,13 @@ class __AddEntryDialogState extends State<_AddEntryDialog> {
     return CupertinoAlertDialog(
       title: const Text('Add Entry'),
       content: Column(
-        children: [
+        children: <Widget>[
+          SizedBox(height: 16), // Add space of 16 logical pixels
           CupertinoTextField(
             controller: _nameController,
             placeholder: 'Name',
           ),
+          SizedBox(height: 16), // Add space of 16 logical pixels
           CupertinoTextField(
             controller: _amountController,
             placeholder: 'Amount',
@@ -397,7 +399,12 @@ class __AddEntryDialogState extends State<_AddEntryDialog> {
           },
         ),
         CupertinoDialogAction(
-          child: const Text('Submit'),
+          child: Text(
+            'Submit',
+            style: TextStyle(
+              color: Colors.red, // Set the color to red
+            ),
+          ),
           onPressed: () {
             if (_validateForm()) {
               widget.onAddEntry(

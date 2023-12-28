@@ -12,14 +12,15 @@ class TabThreeContent extends StatefulWidget {
 class _TabThreeContentState extends State<TabThreeContent> {
   List<Map<String, dynamic>> entries2 = [];
   List<Map<String, dynamic>> entries4 = [];
+  late Future<void> _loadEntriesFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadEntries();
+    _loadEntriesFuture = _loadEntries();
   }
 
-  void _loadEntries() async {
+  Future<void> _loadEntries() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> entriesJson1 = prefs.getStringList('entries2') ?? [];
     List<String> entriesJson2 = prefs.getStringList('entries4') ?? [];
@@ -107,16 +108,6 @@ class _TabThreeContentState extends State<TabThreeContent> {
             _buildDetailRow('Description', entry['Description'] ?? ''),
           ],
         ),
-        actions: [
-          _buildDialogAction('Close', CupertinoColors.systemGrey, () {
-            Navigator.of(context).pop();
-          }),
-          if (!entry['isPaid'])
-            _buildDialogAction('Mark as Paid', CupertinoColors.activeBlue, () {
-              _markAsPaidAndDelete(index, entries);
-              Navigator.of(context).pop();
-            }),
-        ],
       ),
     );
   }
@@ -172,7 +163,23 @@ class _TabThreeContentState extends State<TabThreeContent> {
 
   @override
   Widget build(BuildContext context) {
-    double grandTotal = getTotalSum(entries2);
+    return FutureBuilder(
+      future: _loadEntriesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          // Call _buildEntriesList() method to build the entries list
+          return _buildEntriesList();
+        } else {
+          // Display a loading indicator while loading the data
+          return Center(child: CircularProgressIndicator());
+        }
+      },
+    );
+  }
+
+  Widget _buildEntriesList() {
+    List<Map<String, dynamic>> allEntries = [...entries2, ...entries4];
+    allEntries.sort((a, b) => b['Time'].compareTo(a['Time'])); // Sort by time in descending order
 
     return Padding(
       padding: const EdgeInsets.all(10.0),
@@ -186,14 +193,14 @@ class _TabThreeContentState extends State<TabThreeContent> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
               ),
               child: ListView.builder(
-                itemCount: entries2.length,
+                itemCount: allEntries.length,
                 itemBuilder: (context, index) {
-                  final entry = entries2[entries2.length - index - 1];
+                  final entry = allEntries[index];
                   Color amountColor = entry['Action'] == 'Lent' ? Colors.red : Colors.green;
 
                   return CupertinoButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () => _showDetailsDialog(entry, entries2.length - index - 1, entries2),
+                    onPressed: () => _showDetailsDialog(entry, index, allEntries),
                     child: Container(
                       margin: EdgeInsets.symmetric(vertical: 5.0),
                       padding: EdgeInsets.all(10.0),
@@ -209,8 +216,13 @@ class _TabThreeContentState extends State<TabThreeContent> {
                         ],
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          Icon(
+                            CupertinoIcons.person,
+                            color: CupertinoColors.systemGrey,
+                            size: 30.0,
+                          ),
+                          SizedBox(width: 10.0), // Adjust the spacing
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -220,11 +232,12 @@ class _TabThreeContentState extends State<TabThreeContent> {
                               ),
                               SizedBox(height: 4.0),
                               Text(
-                                'Date: ${entry['Date'] ?? ''}',
-                                style: TextStyle(fontSize: 16.0, color: Colors.grey),
+                                '${entry['Date'] ?? ''}',
+                                style: TextStyle(fontSize: 12.0, color: Colors.grey),
                               ),
                             ],
                           ),
+                          Spacer(), // Push the following items to the right
                           Text(
                             '₹${entry['Amount'] ?? ''}',
                             style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold, color: amountColor),
@@ -237,13 +250,12 @@ class _TabThreeContentState extends State<TabThreeContent> {
               ),
             ),
           ),
+
         ],
       ),
     );
   }
 }
-
-// ... rest of the code
 
 String entryJsonEncode(Map<String, dynamic> entry) {
   return jsonEncode(entry);
