@@ -111,7 +111,11 @@ class _TabThreeContentState extends State<TabThreeContent> {
           _buildDialogAction('Close', CupertinoColors.systemGrey, () {
             Navigator.of(context).pop();
           }),
-
+          if (!entry['isPaid'])
+            _buildDialogAction('Mark as Paid', CupertinoColors.activeBlue, () {
+              _markAsPaidAndDelete(index, entries);
+              Navigator.of(context).pop();
+            }),
         ],
       ),
     );
